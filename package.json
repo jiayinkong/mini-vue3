@@ -1,0 +1,20 @@
+{
+  "name": "mini-vue",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/jiayinkong/mini-vue.git",
+  "author": "jiayinkong <ry1n.kong@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.22.20",
+    "@babel/preset-typescript": "^7.23.0",
+    "@types/jest": "^29.5.5",
+    "babel": "^6.23.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.2.2"
+  }
+}
