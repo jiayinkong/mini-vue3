@@ -1,5 +1,5 @@
-import { reactive } from '../reactive';
-import { effect } from '../effect';
+import { reactive} from '../reactive';
+import { effect, stop } from '../effect';
 
 describe('effect', () => {
   it('happy path', () => {
@@ -60,5 +60,33 @@ describe('effect', () => {
     run();
     // effect fn 再次被触发
     expect(dummy).toBe(2);
+  });
+
+  it('stop runner', () => {
+    let dummy;
+    const obj = reactive({ foo: 1 });
+    const runner = effect(()=> {
+      dummy = obj.foo;
+    });
+    obj.foo = 2;
+    expect(dummy).toBe(2);
+    stop(runner);
+    obj.foo = 3; // 这里不能用 obj.foo++，因为会再走一遍 track，所以 stop 没效果
+    expect(dummy).toBe(2);
+  });
+
+  it('onStop', () => {
+    let dummy;
+    const obj = reactive({ foo: 1 });
+    const onStop = jest.fn();
+    const runner = effect(() => {
+      dummy = obj.foo;
+    }, {
+      onStop,
+    });
+
+    stop(runner);
+
+    expect(onStop).toHaveBeenCalledTimes(1);
   });
 })
