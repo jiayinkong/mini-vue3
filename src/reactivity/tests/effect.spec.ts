@@ -31,5 +31,34 @@ describe('effect', () => {
     const r = runner();
     expect(foo).toBe(3);
     expect(r).toBe('runner');
-  })
+  });
+
+  it('effect scheduler', () => {
+    let dummy;
+    let run: any;
+    const scheduler = jest.fn(() => {
+      run = runner;
+    });
+    const obj = reactive({ foo: 1 });
+    const runner = effect(() => {
+      dummy = obj.foo;
+    }, { scheduler });
+    
+    // 一开始立即执行effect的fn参数
+    expect(dummy).toBe(1);
+    // scheduler没被调用
+    expect(scheduler).not.toHaveBeenCalled();
+    
+    // 触发 set -> trigger
+    obj.foo++;
+    // scheduler被调用1次
+    expect(scheduler).toHaveBeenCalledTimes(1);
+    // runner没被触发
+    expect(dummy).toBe(1);
+
+    // 开始调用runner
+    run();
+    // effect fn 再次被触发
+    expect(dummy).toBe(2);
+  });
 })
