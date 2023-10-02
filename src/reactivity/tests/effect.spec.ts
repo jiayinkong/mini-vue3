@@ -69,9 +69,10 @@ describe('effect', () => {
       dummy = obj.foo;
     });
     obj.foo = 2;
-    expect(dummy).toBe(2);
+    expect(dummy).toBe(2); 
     stop(runner);
-    obj.foo = 3; // 这里不能用 obj.foo++，因为会再走一遍 track，所以 stop 没效果
+    
+    obj.foo++; // 已优化
     expect(dummy).toBe(2);
   });
 
