@@ -1,9 +1,5 @@
 import { extend } from '../shared';
 
-interface ReactiveEffect {
-  _fn: any;
-}
-
 interface EffectOptions {
   scheduler?: Function;
   onStop?: Function | undefined;
@@ -13,12 +9,13 @@ let targetMap = new Map();
 let activeEffect;
 let shouldTrack = false;
 
-class ReactiveEffect {
+export class ReactiveEffect {
+  private _fn: Function;
   private active = true;
   public scheduler?: Function;
   public onStop?: Function;
   public deps = [];
-  constructor(_fn: Function, scheduler) {
+  constructor(_fn: Function, scheduler?) {
     this._fn = _fn;
     this.scheduler = scheduler;
   }
