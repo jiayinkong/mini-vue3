@@ -18,8 +18,12 @@ function patch(vnode, container) {
 }
 
 function processElement(vnode, container) {
+  mountElement(vnode, container);
+}
+
+function mountElement(vnode, container) {
   // 1. 创建标签
-  const el = document.createElement(vnode.type);
+  const el = (vnode.el = document.createElement(vnode.type));
 
   // 2. 处理 标签内容
   const { children } = vnode;
@@ -54,18 +58,23 @@ function processComponent(vnode, container) {
   mountComponent(vnode, container);
 }
 
-function mountComponent(vnode, container) {
+function mountComponent(initialVNode, container) {
   // 创建组件实例 instance
-  const instance = createComponentInstance(vnode);
+  const instance = createComponentInstance(initialVNode);
 
-  // 处理setup的返回结果、设置组件实例 instance 的 setupState、render 属性
+  // 处理setup的返回结果、设置组件实例 instance 的 setupState、render 属性、
+  // 实现组件对象的代理
   setupComponent(instance, container);
 
-
-  setupRenderEffect(instance, container);
+  // 触发组件实例的 render 函数
+  setupRenderEffect(instance, initialVNode, container);
 }
 
-function setupRenderEffect(instance, container) {
-  const subTree = instance.render();
+function setupRenderEffect(instance, initialVNode, container) {
+  const { proxy } = instance;
+  const subTree = instance.render.call(proxy);
   patch(subTree, container);
+
+  // vnode -> element
+  initialVNode.el = subTree.el;
 }

@@ -1,7 +1,10 @@
+import { PublicInstanceProxyHandlers } from './componentPublicInstance';
+
 export function createComponentInstance(vnode) {
   const component = {
     vnode,
     type: vnode.type,
+    setupState: {}
   };
   return component;
 }
@@ -16,6 +19,10 @@ export function setupComponent(instance, container) {
 function setupStatefulComponent(instance) {
   const Component = instance.type;
   const { setup } = Component;
+  
+
+  // 实现组件对象的代理
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers)
 
   if(setup) {
     const setupResult = setup();
@@ -28,7 +35,7 @@ function handleSetupResult(instance, setupResult) {
   // 如果 setup 返回的是 object
   if(typeof setupResult === 'object') {
     // 设置组件实例的 setupState 状态为 setup 返回的这个对象
-    instance.setupSate = setupResult;
+    instance.setupState = setupResult;
   }
   // 完成组件 setup
   finishComponentSetup(instance);
