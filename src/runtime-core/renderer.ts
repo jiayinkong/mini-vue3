@@ -40,6 +40,11 @@ function mountElement(vnode, container) {
   // 循环 props
   for (const key in props) {
     const val = props[key];
+    const isOn = (key: string) => /^on[A-Z]/.test(key);
+    if(isOn(key)) {
+      const event = key.slice(2).toLowerCase();
+      el.addEventListener(event, val);
+    }
     el.setAttribute(key, val);
   }
 

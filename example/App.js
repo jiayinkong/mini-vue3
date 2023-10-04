@@ -9,7 +9,14 @@ export const App = {
     return h('div', { id: 'root' }, [
       h('p', { class: 'red' }, 'Hello'),
       h('p', { class: 'blue' }, 'Mini-vue'),
-      h('p', {}, this.msg),
+      h('p', {
+        onClick: () => {
+          console.log('click');
+        },
+        onMousedown: () => {
+          console.log('mousedown');
+        }
+      }, this.msg),
     ]);
   },
   setup() {
