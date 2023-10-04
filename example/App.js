@@ -1,4 +1,5 @@
 import { h } from '../lib/guide-mini-vue.esm.js';
+import { Foo } from './Foo.js';
 
 window.slef = null;
 
@@ -17,6 +18,9 @@ export const App = {
           console.log('mousedown');
         }
       }, this.msg),
+      h(Foo, {
+        count: 1
+      })
     ]);
   },
   setup() {
