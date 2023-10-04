@@ -1,9 +1,6 @@
-import { isObject } from '../shared/index';
-import { 
-  createComponentInstance, 
-  setupComponent 
-} from './component';
-import { ShapeFlags } from './shapeFlags';
+import { isObject } from "../shared/index";
+import { createComponentInstance, setupComponent } from "./component";
+import { ShapeFlags } from "../shared/shapeFlags";
 
 export function render(vnode, container) {
   patch(vnode, container);
@@ -11,7 +8,7 @@ export function render(vnode, container) {
 
 function patch(vnode, container) {
   const { shapeFlags } = vnode;
-  if(shapeFlags & ShapeFlags.ELEMENT) {
+  if (shapeFlags & ShapeFlags.ELEMENT) {
     // 处理 Element
     processElement(vnode, container);
   } else {
@@ -31,10 +28,10 @@ function mountElement(vnode, container) {
   // 2. 处理 标签内容
   const { children, shapeFlags } = vnode;
   // children 是字符串
-  if(shapeFlags & ShapeFlags.TEXT_CHILDREN) {
-    el.textContent = children; 
-  // children 是数组
-  } else if(shapeFlags & ShapeFlags.ARRAY_CHILDREN) {
+  if (shapeFlags & ShapeFlags.TEXT_CHILDREN) {
+    el.textContent = children;
+    // children 是数组
+  } else if (shapeFlags & ShapeFlags.ARRAY_CHILDREN) {
     mountChildren(vnode, el);
   }
 
@@ -42,7 +39,7 @@ function mountElement(vnode, container) {
 
   // 3. 处理标签的 props 属性
   // 循环 props
-  for(const key in props) {
+  for (const key in props) {
     const val = props[key];
     el.setAttribute(key, val);
   }
@@ -52,7 +49,7 @@ function mountElement(vnode, container) {
 }
 
 function mountChildren(vnode, container) {
-  vnode.children.forEach(v => {
+  vnode.children.forEach((v) => {
     patch(v, container);
   });
 }
