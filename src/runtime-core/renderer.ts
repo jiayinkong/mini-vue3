@@ -1,18 +1,32 @@
 import { createComponentInstance, setupComponent } from './component';
 import { ShapeFlags } from '../shared/shapeFlags';
+import { Fragment, Text } from './vnode';
 
 export function render(vnode, container) {
   patch(vnode, container);
 }
 
 function patch(vnode, container) {
-  const { shapeFlags } = vnode;
-  if(shapeFlags & ShapeFlags.ELEMENT) {
-    // 处理 Element
-    processElement(vnode, container);
-  } else {
-    // 处理组件
-    processComponent(vnode, container);
+  const { shapeFlag, type } = vnode;
+
+  switch (type) {
+    case Fragment:
+      processFragment(vnode, container);
+      break;
+
+    case Text:
+      processText(vnode, container);
+      break;
+
+    default:
+      if (shapeFlag & ShapeFlags.ELEMENT) {
+        // 处理 Element
+        processElement(vnode, container);
+      } else {
+        // 处理组件
+        processComponent(vnode, container);
+      }
+      break;
   }
 }
 
@@ -25,12 +39,12 @@ function mountElement(vnode, container) {
   const el = (vnode.el = document.createElement(vnode.type));
 
   // 2. 处理 标签内容
-  const { children, shapeFlags } = vnode;
+  const { children, shapeFlag } = vnode;
   // children 是字符串
-  if(shapeFlags & ShapeFlags.TEXT_CHILDREN) {
-    el.textContent = children; 
-  // children 是数组
-  } else if(shapeFlags & ShapeFlags.ARRAY_CHILDREN) {
+  if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    el.textContent = children;
+    // children 是数组
+  } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
     mountChildren(vnode, el);
   }
 
@@ -41,7 +55,7 @@ function mountElement(vnode, container) {
   for (const key in props) {
     const val = props[key];
     const isOn = (key: string) => /^on[A-Z]/.test(key);
-    if(isOn(key)) {
+    if (isOn(key)) {
       const event = key.slice(2).toLowerCase();
       el.addEventListener(event, val);
     }
@@ -72,6 +86,20 @@ function mountComponent(initialVNode, container) {
 
   // 触发组件实例的 render 函数
   setupRenderEffect(instance, initialVNode, container);
+}
+
+function processFragment(vnode, container) {
+  mountFragment(vnode, container);
+}
+
+function mountFragment(vnode, container) {
+  mountChildren(vnode, container);
+}
+
+function processText(vnode, container) {
+  const { children } = vnode;
+  const textNode = (vnode.el = document.createTextNode(children));
+  container.append(textNode);
 }
 
 function setupRenderEffect(instance, initialVNode, container) {
