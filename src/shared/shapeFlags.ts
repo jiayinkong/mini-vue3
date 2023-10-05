@@ -3,6 +3,7 @@ export enum ShapeFlags {
   STATEFUL_COMPONENT = 1 << 1,
   TEXT_CHILDREN = 1 << 2,
   ARRAY_CHILDREN = 1 << 3,
+  SLOT_CHILDREN = 1 << 4,
 }
 
 // | 运算符逻辑，同时为 0 才是 0，（只要有 1 就是 1）
