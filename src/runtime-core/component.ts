@@ -3,6 +3,7 @@ import { initProps } from './componentProps';
 import { emit } from './componentEmit';
 import { PublicInstanceProxyHandlers } from './componentPublicInstance';
 import { initSlots } from './componentSlots';
+import { proxyRefs } from '../reactivity';
 
 export function createComponentInstance(vnode, parent) {
   const component = {
@@ -13,6 +14,8 @@ export function createComponentInstance(vnode, parent) {
     slots: {},
     provides: parent ? parent.provides : {},
     parent,
+    isMounted: false,
+    subTree: {},
     emit: () => {},
   };
   component.emit = emit.bind(null, component) as any;
@@ -49,7 +52,7 @@ function handleSetupResult(instance, setupResult) {
   // 如果 setup 返回的是 object
   if(typeof setupResult === 'object') {
     // 设置组件实例的 setupState 状态为 setup 返回的这个对象
-    instance.setupState = setupResult;
+    instance.setupState = proxyRefs(setupResult);
   }
   // 完成组件 setup
   finishComponentSetup(instance);
