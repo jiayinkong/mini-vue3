@@ -38,3 +38,4 @@ function getSequence(arr) {
   }
   return result;
 }
+console.log(getSequence([4,2,3,1,5]))
