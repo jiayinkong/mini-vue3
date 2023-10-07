@@ -9,6 +9,8 @@ export function createRenderer(options) {
     createElement: hostCreateElement, 
     patchProp: hostPatchProp, 
     insert: hostInsert, 
+    remove: hostRemove,
+    setElementText: hostSetElementText,
   } = options;
 
   function render(vnode, container) {
@@ -44,14 +46,11 @@ export function createRenderer(options) {
     if(!n1) {
       mountElement(n2, container, parentComponent);
     } else {
-      patchElement(n1, n2, container);
+      patchElement(n1, n2, container, parentComponent);
     }
   }
 
-  function patchElement(n1, n2, container) {
-    console.log('patchELement');
-    console.log('n1', n1);
-    console.log('n2', n2);
+  function patchElement(n1, n2, container, parentComponent) {
 
     // 更新 props：
     const oldProps = n1.props || EMPTY_OBJ;
@@ -59,9 +58,40 @@ export function createRenderer(options) {
 
     const el = (n2.el = n1.el);
 
+    patchChildren(n1, n2, el, parentComponent);
     patchProps(el, oldProps, newProps);
+  }
 
-    // TODO 更新 children
+  function patchChildren(n1, n2, container, parentComponent) {
+    const prevShapeFlag = n1.shapeFlag;
+    const { shapeFlag } = n2;
+    const c1 = n1.children;
+    const c2 = n2.children;
+
+    if(shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      if(prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 1. 把老的 children 清空
+        unmountChildren(n1.children);
+      }
+
+      if(c1 !== c2) {
+        hostSetElementText(container, c2);
+      }
+    } else {
+      // 新的 children 是 array
+      if(prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+        hostSetElementText(container, '');
+        mountChildren(c2, container, parentComponent);
+      }
+    }
+  }
+
+  function unmountChildren(children) {
+    for(let i = 0; i < children.length; i++) {
+      const el = children[i].el;
+      // remove
+      hostRemove(el);
+    }
   }
 
   const EMPTY_OBJ = {};
@@ -100,7 +130,7 @@ export function createRenderer(options) {
       el.textContent = children;
       // children 是数组
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(vnode, el, parentComponent);
+      mountChildren(vnode.children, el, parentComponent);
     }
   
     const { props } = vnode;
@@ -117,8 +147,8 @@ export function createRenderer(options) {
     hostInsert(el, container);
   }
   
-  function mountChildren(vnode, container, parentComponent) {
-    vnode.children.forEach((v) => {
+  function mountChildren(children, container, parentComponent) {
+    children.forEach((v) => {
       patch(null, v, container, parentComponent);
     });
   }
@@ -144,7 +174,7 @@ export function createRenderer(options) {
   }
   
   function mountFragment(n1, n2, container, parentComponent) {
-    mountChildren(n2, container, parentComponent);
+    mountChildren(n2.children, container, parentComponent);
   }
   
   function processText(n1, n2, container) {
@@ -182,3 +212,16 @@ export function createRenderer(options) {
     createApp: createAppAPI(render),
   }
 }
+
+
+
+
+// vnode, subTree, n1, n2 - 虚拟节点 h('div', {}, []) h('div', {}, '')
+
+// container - 标签，一开始是 rooContainer最外层标签，
+// 后面会经过 mountChildren 的过程，
+// 把 vnode.el(document.createElement新建的标签)作为 container 传给 patch 作为 children-vnode 的 container
+
+// parentComponent - 父组件实例 instance
+// 在 setupRenderEffect 时，执行 instance.render 得到 subTree，
+// subTree作为新的vnode传给patch递归，而instance 便是作为父组件实例
