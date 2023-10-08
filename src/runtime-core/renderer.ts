@@ -3,6 +3,7 @@ import { ShapeFlags } from '../shared/shapeFlags';
 import { Fragment, Text } from './vnode';
 import { createAppAPI } from './createApp';
 import { effect } from '../reactivity/effect';
+import { shouldUpdateComponent } from './componentUpdateUtils';
 
 export function createRenderer(options) {
   const { 
@@ -313,12 +314,28 @@ export function createRenderer(options) {
   }
   
   function processComponent(n1, n2, container, parentComponent, anchor) {
-    mountComponent(n2, container, parentComponent, anchor);
+    if(!n1) {
+      mountComponent(n2, container, parentComponent, anchor);
+    } else {
+      updateComponent(n1, n2);
+    }
+  }
+
+  function updateComponent(n1, n2) {
+    const instance = (n2.component = n1.component);
+
+    if(shouldUpdateComponent(n1, n2)) {
+      instance.next = n2;
+      instance.update();
+    } else {
+      n2.el = n1.el;
+      instance.vnode = n2;
+    }
   }
   
   function mountComponent(initialVNode, container, parentComponent, anchor) {
     // 创建组件实例 instance
-    const instance = createComponentInstance(initialVNode, parentComponent);
+    const instance = (initialVNode.component = createComponentInstance(initialVNode, parentComponent));
   
     // 处理setup的返回结果、设置组件实例 instance 的 setupState、render 属性、
     // 实现组件对象的代理
@@ -343,7 +360,7 @@ export function createRenderer(options) {
   }
   
   function setupRenderEffect(instance, initialVNode, container, anchor) {
-    effect(() => {
+    instance.update = effect(() => {
       if(!instance.isMounted) {
         console.log('init');
         const { proxy } = instance;
@@ -357,6 +374,15 @@ export function createRenderer(options) {
         instance.isMounted = true;
       } else {
         console.log('update');
+
+        // 更新 props，需要一个 vnode
+        const { next, vnode } = instance;
+        if(next) {
+          // 设置 新虚拟节点的 el
+          next.el = vnode.el;
+          updateComponentPreRender(instance, next);
+        }
+
         const { proxy } = instance;
         const subTree = instance.render.call(proxy);
         const prevSubTree = instance.subTree;
@@ -370,6 +396,15 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render),
   }
+}
+
+function updateComponentPreRender(instance, nextVNode) {
+  // 更新当前实例的 vnode 为新的
+  instance.vnode = nextVNode;
+  // 当前实例的 next 节点清空 
+  instance.next = null; 
+  // 更新当前实例的 props 
+  instance.props = nextVNode.props;
 }
 
 function getSequence(arr) {
