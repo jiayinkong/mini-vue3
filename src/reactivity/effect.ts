@@ -1,4 +1,4 @@
-import { extend } from '../shared';
+import { extend } from '../shared/index';
 
 interface EffectOptions {
   scheduler?: Function;
