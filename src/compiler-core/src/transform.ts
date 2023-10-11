@@ -13,7 +13,13 @@ export function transform(root, options = {}) {
 }
 
 function createRootCodegen(root) {
-  return root.codegenNode = root.children[0];
+  root.codegenNode = root.children[0];
+  const child = root.children[0];
+  if(child.type === NodeTypes.ELEMENT) {
+    root.codegenNode = child.codegenNode;
+  } else {
+    root.codegenNode = root.children[0];
+  }
 }
 
 function createTransformText(root, options) {
@@ -31,10 +37,12 @@ function createTransformText(root, options) {
 
 function traverseNode(node, context) {
   const nodeTransforms = context.nodeTransforms;
+  let existFns: any = [];
 
   for(let i = 0; i < nodeTransforms.length; i++) {
     const transform = nodeTransforms[i];
-    transform(node);
+    const onExist = transform(node, context);
+    if(onExist) existFns.push(onExist);
   }
 
   switch (node.type) {
@@ -49,6 +57,11 @@ function traverseNode(node, context) {
   
     default:
       break;
+  }
+
+  let i = existFns.length;
+  while(i--) {
+    existFns[i]();
   }
 }
 
