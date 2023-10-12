@@ -1,0 +1,13 @@
+{
+  "name": "@mini-vue3/compiler-core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mini-vue3/shared": "workspace:^1.0.0"
+  }
+}
