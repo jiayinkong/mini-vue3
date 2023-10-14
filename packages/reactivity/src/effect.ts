@@ -85,6 +85,11 @@ export function isTracking() {
 
 export function trigger(target, key) {
   const depsMap = targetMap.get(target);
+
+  if(!depsMap) {
+    return;
+  }
+
   const dep = depsMap.get(key);
 
   triggerEffects(dep);

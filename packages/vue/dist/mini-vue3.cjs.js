@@ -156,15 +156,20 @@ function isTracking() {
 }
 function trigger(target, key) {
     const depsMap = targetMap.get(target);
+    if (!depsMap) {
+        return;
+    }
     const dep = depsMap.get(key);
     triggerEffects(dep);
 }
 function triggerEffects(dep) {
     for (const effect of dep) {
         if (effect.scheduler) {
+            debugger;
             effect.scheduler();
         }
         else {
+            debugger;
             effect.run();
         }
     }
@@ -486,6 +491,7 @@ function shouldUpdateComponent(prevVNode, nextVNode) {
 }
 
 const queue = [];
+const activePreFlushCbs = [];
 const p = Promise.resolve();
 let isFlushPending = false;
 function nextTick(fn) {
@@ -505,9 +511,17 @@ function queueFlush() {
 }
 function flushJobs() {
     isFlushPending = false;
+    // 组件渲染之前调用
+    flushPreFlushCbs();
+    // 组件渲染，执行 render 函数
     let job;
     while (job = queue.shift()) {
         job && job();
+    }
+}
+function flushPreFlushCbs() {
+    for (let i = 0; i < activePreFlushCbs.length; i++) {
+        activePreFlushCbs[i]();
     }
 }
 
@@ -952,6 +966,7 @@ function createApp(...args) {
 
 var runtimeDom = /*#__PURE__*/Object.freeze({
     __proto__: null,
+    ReactiveEffect: ReactiveEffect,
     createApp: createApp,
     createElementVNode: createVNode,
     createRenderer: createRenderer,
@@ -1372,6 +1387,7 @@ registerRuntimeCompiler(compileToFunction);
 // Vue ->     
 // runtime-dom -> runtime-core -> reactivity
 
+exports.ReactiveEffect = ReactiveEffect;
 exports.createApp = createApp;
 exports.createElementVNode = createVNode;
 exports.createRenderer = createRenderer;
