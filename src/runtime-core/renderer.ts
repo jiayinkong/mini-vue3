@@ -135,6 +135,13 @@ export function createRenderer(options) {
     }
 
     // 新的比老的多 创建
+    /** 
+     *         a b
+     * (h f g) a b
+     * 
+     * a b
+     * a b (d)
+     */
     if(i > e1) {
       if(i <= e2) {
         const nextPos = e2 + 1;
@@ -146,6 +153,9 @@ export function createRenderer(options) {
         }
       }
     // 老的比新的长 删除
+    /**
+     * 
+     */
     } else if(i > e2) {
       while(i <= e1) {
         hostRemove(c1[i].el);
@@ -156,14 +166,29 @@ export function createRenderer(options) {
       let s1 = i; // 旧节点开始位置
       let s2 = i; // 新节点开始位置
 
-      const toBePatched = e2 - s2 + 1; // 新节点中间那些需要patch的个数
-      let patched = 0; // 开始的patch数
+      /**
+       * keyToNewIndexMap key-newIndex 
+       * key 新节点的 key 
+       * value 新节点的索引
+       */
       const keyToNewIndexMap = new Map(); 
-      // 实现移动（最长递增思想）
+      
+      // 新节点中间那些需要patch的个数，newIndexToOldIndexMap 的 length
+      const toBePatched = e2 - s2 + 1;
+      let patched = 0; // 开始的patch数
+
+      /**
+       * newIndexToOldIndexMap 对应中间那些待 patch 的新节点，
+       * 索引 index 为 0 ～ (toBepatched-1)
+       * 值为老节点索引
+       */
       const newIndexToOldIndexMap = new Array(toBePatched);
       let moved = false;
+      // 协助判断 moved，遍历老节点，如当前对应的 newIndex 更大，更新 newIndex
+      // 理应当前的对应的 newIndex 比上一个节点大，否则表明有移动
       let maxNewIndexSoFar = 0;
 
+      // 初始化 newIndexToOldIndexMap，处于没被标记为有对应的老节点的状态
       for(let i = 0; i < toBePatched; i++) {
         newIndexToOldIndexMap[i] = 0;
       }
@@ -205,41 +230,53 @@ export function createRenderer(options) {
         } else {
 
           if(newIndex >= maxNewIndexSoFar) {
+            // 随着老节点往下遍历，老节点对应的 newIndex 更大的话，更新 maxNewIndexSoFar 值
             maxNewIndexSoFar = newIndex;
           } else {
+            // 只要有 newIndex 变小了，就说明有移动
             moved = true;
           }
 
-          // 需要patch的新节点集合的索引与旧节点索引之间的映射关系
+          // 可以看作是需要 patch 的新节点数组的索引与老节点索引之间的映射关系
           // i + 1 是为了规避 0
           // 0 在 newIndexToOldIndexMap 中表示还没开始找映射关系的一种状态
           newIndexToOldIndexMap[newIndex - s2] = i + 1;
           patch(prevChild, c2[newIndex], container, parentComponent, null);
           patched++;
         }
-      }
+      } 
 
-      // 获得 newIndexToOldIndexMap 的最长递增子序列（返回的是索引）
-      // increasingNewIndexSequence 是数组 newIndexToOldIndexMap 的索引集合
+      // increasingNewIndexSequence 是最长递增子序列
+      // 项代表需要 patch 的节点的索引
+      // 在 increasingNewIndexSequence 序列中的元素不需要移动
       const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
+      // 相当于一个指针指向最长递增子序列数组尾部
       let j = increasingNewIndexSequence.length - 1;
 
-      // 从后往前遍历需要 patch 的新节点
+      // 遍历需要 patch 的新节点找出不在最长递子序列中的节点索引，进行节点的移动，
+      // 之所以 for 遍历 toBePatched + 移动 j 指针 可行 ，是因为它们都是升序的
+      // 从后往前遍历，性能更优
       for(let i = toBePatched - 1; i >= 0; i--) {
         const nextIndex = i + s2; // 当前需要被移动的节点位置
         const nextChild = c2[nextIndex]; // 当前需要被移动的节点
         const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1].el : null; // 插入锚点
         
-        // 当前节点不存在于老节点中
+        // 当前节点不存在于老节点中，创建
+        // 1. 上面没有 key 的节点，由于 newIndex 为 undefined 已被移除，但会来到这里新创建
+        // 也就是没有 key 的节点，经历了移除、创建两个步骤
+        // 2. 有 key 但不存在于老节点中
         if(newIndexToOldIndexMap[i] === 0) {
           patch(null, nextChild, container, parentComponent, anchor);
         }
 
         if(moved) {
+          // 从需要 patch 的节点中，找出不在最长递增子序列中的索引 i，
+          // 该索引 i 对应的节点才需要移动
           if(j < 0 || i !== increasingNewIndexSequence[j]) {
             console.log('移动');
             hostInsert(nextChild.el, container, anchor);
           } else {
+            // 如果 i 包含在最长递增子序列内，则移动指针，判断下一个
             j--;
           }
         }
