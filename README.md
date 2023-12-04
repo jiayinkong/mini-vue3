@@ -1,4 +1,4 @@
 # mini-vue 笔记
 
-[手写 mini-vue - reactivity 篇（一）](https://juejin.cn/post/7289662055183745059)
+[手写 mini-vue3 专栏](https://juejin.cn/column/7307471267481452555)
 

@@ -163,11 +163,9 @@ function trigger(target, key) {
 function triggerEffects(dep) {
     for (const effect of dep) {
         if (effect.scheduler) {
-            debugger;
             effect.scheduler();
         }
         else {
-            debugger;
             effect.run();
         }
     }
